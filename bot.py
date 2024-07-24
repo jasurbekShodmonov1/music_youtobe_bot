@@ -4,7 +4,6 @@ import requests
 import yt_dlp
 import os
 
-# Replace with your credentials
 TELEGRAM_TOKEN = '7287823531:AAH6EA5cs8aXD3PDd26MfKs--lf6b6LEt4g'
 YOUTUBE_API_KEY = 'AIzaSyCt0zmvwXohQ0aj6cnG0OrWyVTulF74dtI'
 DOWNLOAD_PATH = 'downloads/'  # Directory to save MP3 files
@@ -27,10 +26,19 @@ def search_youtube(song_title):
         'q': song_title,
         'key': YOUTUBE_API_KEY,
         'type': 'video',
-        'maxResults': 50  # Fetch multiple results for better choice
+        'maxResults': 50
     }
     response = requests.get(search_url, params=params)
     data = response.json()
+
+    if 'error' in data:
+        error_message = data['error']['message']
+        if 'quota' in error_message:
+            print(f"Quota exceeded: {error_message}")
+            return []  # Handle the quota error gracefully
+        else:
+            print(f"API Error: {error_message}")
+            return []
 
     if 'items' in data and len(data['items']) > 0:
         results = [
@@ -40,7 +48,6 @@ def search_youtube(song_title):
             }
             for item in data['items']
         ]
-        # Store the video info globally
         global video_info
         video_info = {result['video_id']: result['title'] for result in results}
         return results
@@ -84,7 +91,7 @@ async def handle_message(update: Update, context: CallbackContext) -> None:
             'results': results,
             'current_page': 0
         }
-        await send_results(update, context)
+        await send_results(update, context, 0)
     else:
         await update.message.reply_text('Song not found.')
 
@@ -115,8 +122,11 @@ async def send_results(update: Update, context: CallbackContext, page=0) -> None
     if end < total_results:
         pagination_buttons.append(InlineKeyboardButton('Next', callback_data=f'next_{page}'))
 
-    reply_markup = InlineKeyboardMarkup([*keyboard, pagination_buttons])
-    await context.bot.send_message(chat_id, 'Choose a song to download:', reply_markup=reply_markup)
+    reply_markup = InlineKeyboardMarkup(keyboard + [pagination_buttons])
+    if update.message:
+        await update.message.reply_text('Choose a song to download:', reply_markup=reply_markup)
+    elif update.callback_query:
+        await update.callback_query.edit_message_reply_markup(reply_markup=reply_markup)
 
 
 async def button_click(update: Update, context: CallbackContext) -> None:
