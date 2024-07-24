@@ -6,6 +6,7 @@ import os
 
 TELEGRAM_TOKEN = '7287823531:AAH6EA5cs8aXD3PDd26MfKs--lf6b6LEt4g'
 YOUTUBE_API_KEY = 'AIzaSyCt0zmvwXohQ0aj6cnG0OrWyVTulF74dtI'
+PORT = int(os.getenv('PORT', '8443'))
 DOWNLOAD_PATH = 'downloads/'  # Directory to save MP3 files
 
 # Ensure the download path exists
