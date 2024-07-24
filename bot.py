@@ -159,4 +159,4 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    main( host='api.telegram.org', port=9000)
+    main()
